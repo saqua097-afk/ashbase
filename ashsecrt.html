@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СОВЕРШЕННО СЕКРЕТНО // Архив</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #e9e1c9;
+    --paper-dark: #ddd2b0;
+    --ink: #23201a;
+    --ink-soft: #4a463c;
+    --red: #9c1f1f;
+    --red-deep: #6f1414;
+    --line: #b9ac85;
+    --redact: #1a1815;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 3px),
+      radial-gradient(circle at 15% 10%, rgba(0,0,0,0.05), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(0,0,0,0.06), transparent 45%);
+    color: var(--ink);
+    font-family: 'Courier Prime', monospace;
+    min-height:100vh;
+  }
+  h1,h2,h3,.stamp,.tab-btn,.doc-num{ font-family:'Oswald', sans-serif; }
+
+  /* ================= ГЕЙТ ДОСТУПА ================= */
+  #gate{
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding: 24px;
+  }
+  .gate-box{
+    width:100%; max-width: 480px;
+    background: var(--paper-dark);
+    border: 2px solid var(--ink);
+    padding: 40px 34px;
+    position:relative;
+  }
+  .gate-box::before{
+    content:"";
+    position:absolute; inset:8px;
+    border: 1px solid var(--red-deep);
+    pointer-events:none;
+  }
+  .seal{
+    width:64px; height:64px;
+    border: 3px solid var(--red);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin: 0 auto 18px;
+    color: var(--red);
+    font-size: 26px;
+    font-weight:700;
+  }
+  .gate-eyebrow{
+    text-align:center;
+    letter-spacing:4px;
+    font-size:12px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .gate-box h1{
+    text-align:center;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--red-deep);
+    margin-bottom: 22px;
+    text-transform:uppercase;
+  }
+  .gate-box label{
+    display:block;
+    font-size:12px;
+    color: var(--ink-soft);
+    margin-bottom:8px;
+    letter-spacing:1px;
+  }
+  .gate-box input{
+    width:100%;
+    background: var(--paper);
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-family:'Courier Prime', monospace;
+    font-size:16px;
+    padding: 11px 13px;
+    outline:none;
+    letter-spacing:2px;
+  }
+  .gate-box input:focus{ border-color: var(--red); }
+  .gate-box button{
+    width:100%;
+    margin-top:18px;
+    background: var(--red-deep);
+    border: 1px solid var(--red);
+    color: var(--paper);
+    font-family:'Oswald', sans-serif;
+    letter-spacing: 3px;
+    font-size:13px;
+    padding: 13px;
+    cursor:pointer;
+    text-transform:uppercase;
+  }
+  .gate-box button:hover{ background: var(--red); }
+  .gate-err{
+    color: var(--red);
+    font-size:12px;
+    text-align:center;
+    margin-top:12px;
+    min-height:16px;
+    letter-spacing:1px;
+  }
+
+  /* ================= АРХИВ ================= */
+  #archive{ display:none; }
+  #archive.active{ display:block; }
+
+  header.top-bar{
+    background: var(--ink);
+    color: var(--paper);
+    padding: 16px 26px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-bottom: 4px solid var(--red-deep);
+  }
+  header.top-bar .title{
+    letter-spacing:3px;
+    font-size:14px;
+  }
+  header.top-bar .title small{
+    display:block;
+    color:#a89f88;
+    font-size:10px;
+    letter-spacing:2px;
+    margin-top:2px;
+  }
+  header.top-bar button{
+    background:transparent;
+    border:1px solid #6b6455;
+    color:#c9c2ae;
+    font-family:'Oswald', sans-serif;
+    font-size:11px;
+    letter-spacing:2px;
+    padding:8px 14px;
+    cursor:pointer;
+  }
+  header.top-bar button:hover{ border-color: var(--red); color: var(--red); }
+
+  .layout{
+    display:flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: calc(100vh - 68px);
+  }
+
+  /* -------- боковая картотека -------- */
+  nav.catalog{
+    width: 230px;
+    flex-shrink:0;
+    border-right: 2px solid var(--ink);
+    background: var(--paper-dark);
+    padding: 18px 0;
+  }
+  nav.catalog .catalog-title{
+    font-size:11px;
+    letter-spacing:2px;
+    color: var(--ink-soft);
+    padding: 0 18px 12px;
+    border-bottom: 1px dashed var(--line);
+    margin-bottom: 6px;
+  }
+  .tab-btn{
+    display:flex; align-items:baseline; gap:10px;
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    border-bottom: 1px solid var(--line);
+    padding: 11px 18px;
+    font-size: 12.5px;
+    letter-spacing: 0.5px;
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .tab-btn .doc-num{ color: var(--red-deep); font-size:11px; }
+  .tab-btn:hover{ background: rgba(156,31,31,0.08); color: var(--ink); }
+  .tab-btn.selected{
+    background: var(--paper);
+    color: var(--ink);
+    border-left: 4px solid var(--red);
+    padding-left: 14px;
+    font-weight:700;
+  }
+
+  /* -------- содержимое досье -------- */
+  main.reader{
+    flex:1;
+    padding: 34px 40px;
+  }
+  .dossier{ display:none; }
+  .dossier.active{ display:block; }
+
+  .doc-frame{
+    background: var(--paper-dark);
+    border: 2px solid var(--ink);
+    padding: 30px 34px;
+    position:relative;
+    max-width: 720px;
+  }
+  .stamp{
+    position:absolute;
+    top: 18px; right: 22px;
+    border: 3px solid var(--red);
+    color: var(--red);
+    padding: 5px 12px;
+    font-size: 11px;
+    letter-spacing:2px;
+    transform: rotate(-8deg);
+    opacity:0.85;
+    text-transform:uppercase;
+  }
+  .doc-frame .doc-title{
+    font-size: 19px;
+    letter-spacing:1px;
+    color: var(--red-deep);
+    text-transform:uppercase;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+    max-width: 78%;
+  }
+  .doc-meta{
+    font-size:11.5px;
+    color: var(--ink-soft);
+    line-height:1.8;
+    margin-bottom: 18px;
+    border-left: 3px solid var(--line);
+    padding-left: 12px;
+  }
+  .doc-body p{
+    font-size: 14px;
+    line-height: 1.85;
+    margin-bottom: 12px;
+    max-width: 62ch;
+  }
+  .redacted{
+    display:inline-block;
+    background: var(--redact);
+    color: var(--redact);
+    padding: 0 6px;
+    user-select:none;
+  }
+
+  @media (max-width: 760px){
+    .layout{ flex-direction:column; }
+    nav.catalog{ width:100%; display:flex; overflow-x:auto; padding:10px 0; }
+    nav.catalog .catalog-title{ display:none; }
+    .tab-btn{ border-bottom:none; border-right:1px solid var(--line); white-space:nowrap; }
+    .tab-btn.selected{ border-left:none; border-bottom:4px solid var(--red); padding-left:18px; }
+    main.reader{ padding: 20px; }
+    .doc-frame{ padding: 22px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= ГЕЙТ ДОСТУПА ================= -->
+  <div id="gate">
+    <div class="gate-box">
+      <div class="seal">★</div>
+      <div class="gate-eyebrow">АРХИВ КЛАНА ASH</div>
+      <h1>Совершенно секретно</h1>
+      <label for="pwd">Код доступа</label>
+      <input type="password" id="pwd" autocomplete="off" placeholder="••••••••">
+      <button id="unlockBtn">ПРЕДЪЯВИТЬ ДОПУСК</button>
+      <div class="gate-err" id="gateErr"></div>
+    </div>
+  </div>
+
+  <!-- ================= АРХИВ ================= -->
+  <div id="archive">
+    <header class="top-bar">
+      <div class="title">АРХИВ ОСОБОЙ ПАПКИ
+        <small>ФОНД № 1 / ОПИСЬ № 1</small>
+      </div>
+      <button id="lockBtn">ЗАКРЫТЬ ДОСТУП</button>
+    </header>
+
+    <div class="layout">
+      <!-- ===== КАРТОТЕКА (список досье) — редактируйте названия здесь ===== -->
+      <nav class="catalog" id="catalog">
+        <div class="catalog-title">КАРТОТЕКА ДЕЛ</div>
+      </nav>
+
+      <!-- Содержимое досье собирается автоматически из DOSSIERS в конце файла -->
+      <main class="reader" id="reader"></main>
+    </div>
+  </div>
+
+<script>
+  // Пароль доступа — поменяйте на свой прямо здесь:
+  const PASSWORD = "фимозводана";
+
+  const gate = document.getElementById('gate');
+  const archive = document.getElementById('archive');
+  const pwd = document.getElementById('pwd');
+  const err = document.getElementById('gateErr');
+
+  function unlock(){
+    if(pwd.value === PASSWORD){
+      gate.style.display = 'none';
+      archive.classList.add('active');
+    } else {
+      err.textContent = 'ДОСТУП ОТКЛОНЁН — неверный код';
+      pwd.value = '';
+    }
+  }
+  document.getElementById('unlockBtn').addEventListener('click', unlock);
+  pwd.addEventListener('keydown', e => { if(e.key === 'Enter') unlock(); });
+  document.getElementById('lockBtn').addEventListener('click', () => {
+    archive.classList.remove('active');
+    gate.style.display = 'flex';
+    err.textContent = '';
+  });
+
+  /* ==========================================================================
+     ЗДЕСЬ РЕДАКТИРУЕТСЯ ВЕСЬ КОНТЕНТ. Ничего в HTML трогать не нужно.
+
+     Для каждого досье заполните:
+       title  — название, которое видно в списке слева и в шапке карточки
+       stamp  — надпись на штампе ("Секретно" / "Совершенно секретно" / своя)
+       meta   — строка под заголовком (источник, дата, гриф и т.д.)
+       text   — сам текст. Можно вставлять сколько угодно строк.
+                Пустая строка между абзацами = новый абзац.
+                Текст между `обратными кавычками`, поэтому можно переносить
+                строки просто нажатием Enter.
+     ========================================================================== */
+  const DOSSIERS = [
+    {
+      title: "Досье номер 1, список участников ао",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — клан 73· ДАТА: — 31 июля· ГРИФ: —",
+      text: `взято из телеграм, состав ао с никами из ссб будет собран позже
+ * Nupid stigger
+ * [AO] RPOX
+ * [AO] KARTOGRAF
+ * HASI
+ * Last name
+ * Rick Sanchez
+ * BELUGA | @issky...
+ * sunrisee_set
+ * Аркан
+ * tfeetip
+ * Lockdown
+ * Ольга 300 метров от вас
+ * Артём
+ * Стенли13к
+ * [Kolya-213]
+ * Evgeniy Baryev
+ * SYRR3X
+ * •Kogǔshibo•
+ * KATSU
+ * m1xxs1
+ * █▬█ ̄ ̄ デ SCRAPOVNIK ̄ ̄ ̄
+ * ???
+ * Саша Волкин
+ * TDS wu
+ * Тимофій Балабкін
+ * Mad max
+ * Михаил Рощинский
+ * Imomalin Tursunov | Mallsy
+ * Крутой мужик777
+ * 10
+ * WUGA
+ * Алан
+ * Den
+ * Cladd1m0v
+ * AKCY
+ * Fraim #GNCD
+ * семга
+ * |Egorchik|
+ * Krismo
+ * |Rick Sanchez|
+ * Dorzhu
+ * @иVка
+ * Astarotth | yourbestfriend
+ * daniel
+ * blackwood
+ * ТюЛеШкО
+ * Костян
+ * ?
+ * [AO] ABOSHA_ FARM
+ * Mar
+ * NBA
+ * [AO] RANZOV
+ * Ckc
+ * Lazyrasik [DRH_IMPERATOR]
+ * MTDEW
+ * великий вершитель
+ * NOT_USER
+ * Lostpart
+ * Israelis
+ * Charles Oliveiro
+ * bezmozgovii
+ * aspeex
+ * $$$€
+не полный список так как информация немного устарела, в составе ао находится примерно 70-80 человек, половина из них не актив`
+    },
+    {
+      title: "Досье номер 2. личные данные Хаси",
+      stamp: "Совершенно секретно",
+      meta: "ИСТОЧНИК: — ASH· ДАТА: — 9 августа· ГРИФ: —",
+      text: `Sherlock Report
+79050047724
++4
+79050047724
+Билайн , Россия (Республика Башкортостан)
+Краткая сводка
+Личности
+АЙДАКОВА ТАМАРА ИВАНОВНА
+07.03.1958 50%
+АЙДАКОВ ДАНИЛ ОЛЕГОВИЧ
+07.04.2005 50%
+Паспорт
+8019945530 66.67%
+8004880514 33.33%
+Телефон
+79050047724
+СНИЛС
+15355366773
+ИНН
+264903913150
+Email
+DANILBU97@GMAIL.COM 76.92%
+MANSON-1998@MAIL.RU 7.69%
+ANKA.LUGOVAYA@MAIL.RU 7.69%
+IMANN98@RAMBLER.RU 7.69%
+Отчёты по найденным лицам
+Вы можете открыть дополнительные отчёты по найденным лицам или объединить
+их в один расширенный документ.
+АЙДАКОВА ТАМАРА ИВАНОВНА 07.03.1958 DANILBU97@GMAIL.COM
+Объединить все в один отчет
+Профили в интернете
+Сервис Имя Ссылка
+ВКонтакте Kazanski Alekseї https://vk.com/id22826012
+ВКонтакте Lugovaya Anna https://vk.com/id59514358
+ВКонтакте Pavlova Kristina https://vk.com/id129749191
+ВКонтакте Aydakov Danil https://vk.com/id414215747
+Telegram 1403398946 https://t.me/isskysstvoo
+Банковские организации
+АЛЬФА БАНК СБЕРБАНК Банк Имя клиента
+Данил Олегович А.
+Данил Олегович А.
+ТИНЬКОФФ БАНК Данил Олегович А.
+Возможные связи (1)
+Информация носит ориентировочный характер и может содержать
+неточности.
+Айдаков Данил Олегович 07.04.2005 21 лет
+Возможные имена (15)
+Ниже приведены варианты, под которыми этот контакт может быть сохранён у
+других пользователей.
+АЙДАКОВ ДАНИЛ ОЛЕГОВИЧ АЙДАКОВ ДАНИЛ RUZMATOVA SALOMAT
+АЙДАКОВА ТАМАРА ИВАНОВНА ГУБНИН ЕВГЕНИЙ АЛЕКСАНДРОВИЧ
+Contact_79050047724 GOAT Данил Данил А Данил Айдаков
+Данил Олегович А. денёк гунбин Дура Евгений Доставка Книги
+𝑯𝑨𝑺𝑰
+Адрес ▲
+▼ 452689 РЕСП БАШКОРТОСТАН Г
+НЕФТЕКАМСК Ш БЕРЕЗОВСКОЕ Д 10Б
+ЭТАЖ 0
+3 75%
+452000,РОССИЯ,Г. НЕФТЕКАМСК Г,УЛ.
+ЛЕНИНА,43,КВ. 50 Адреса (2)
+Список найденных адресов с частотой встречаемости.
+Показать 5 записей Поиск: Что ищете?
+Количество ▲
+▼ % ▲
+▼ Карта ▲
+▼
+1 25%
+Записи с 1 до 2 из 2 записей Предыдущая 1 Следующая
+Сайты, где найдены регистрации
+Ниже приведены сайты, на которых обнаружена активность или регистрация.
+beeline.ru dodopizza.ru gosuslugi.ru taxsee.com
+1win.ru burgerkingrus.ru cdek.ru kassy.ru kuper.ru
+vk.com spasibosberbank.ru avito.ru mail.ru
+Клиенты beeline.ru 2026
+ФИО Айдакова Тамара Ивановна
+День рождения 07.03.1958
+Телефон 79050047724
+Паспорт 8004880514
+Дата выдачи паспорта 23.09.2003
+Кем выдан паспорт УВД г.Нефтекамска Респ.Башкортостан
+Дата регистрации 10.04.2020 00:00:00
+Дата последней активности 10.04.2020 14:40:41
+Адрес 452000,РОССИЯ,г. Нефтекамск г,ул. Ленина,43,Кв. 50
+Пользователи dodopizza.ru 2026
+ФИО Айдаков Данил Олегович
+День рождения 07.04.2005
+Телефон 79050047724
+Комментарий Пиццерия: Уфа-7. Вакансия: Пиццамейкер
+Воронка продаж Приём на работу
+Стадия сделки Неявка на экскурсию
+Сделка Айдаков Данил Олегович
+Дата обновления 04.05.2026 14:23:30
+Вакансия Пиццамейкер
+Гражданство Гражданин РФ
+Город Уфа
+Медицинская организация [CO]ООО Поликлиника Импульс
+Юридическое лицо [CO]ООО РОКЕТ ПИЦЦА УФА
+Пользователи gosuslugi.ru 2026
+Телефон 79050047724
+Статус Дата статуса 2026-06-19
+Учётная запись подтверждена и активна
+Клиенты taxsee.com 2025
+ФИО Айдаков Данил Олегович
+Телефон 79050047724
+База (налог) Максим Нефтекамск
+Дата регистрации 2021-06-22 13:18:03
+Сальдо 0.0
+Спамеры SamuTech 2025
+ФИО Пахом
+Телефон 79050047724
+Уровень спама по номеру те
+лефона
+3/5
+Пользователи 1win.ru 2024
+Имя клиента Danil
+Телефон 79050047724
+Email danilbu97@gmail.com
+IP-адрес 136.169.173.202
+Дата регистрации 2024-04-29 09:41:54
+Баланс 4.918050
+Валюта USD
+Skype @isskysstvoo
+О себе telegram
+Последний онлайн 2024-06-03 12:09:00
+Пользователи burgerkingrus.ru 2024
+Телефон 79050047724
+Email danilbu97@gmail.com
+ФИО Данил
+День рождения 07.04.2005
+Адрес Нефтекамск
+Любимая категория закускам
+Любимое блюдо Кинг Фри джун
+Сегмент лояльности Поздний отток
+Часовой пояс Asia/Yekaterinburg
+Дата 2024-08-24 12:22:02
+Клиенты cdek.ru 2024
+Имя клиента Айдаков Данил Олегович
+Телефон 79050047724
+Тип кредита Физ. лицо
+Адрес Россия Нефтекамск
+Ответственный офис RU, Управляющая Компания, Бэк, ул. Большевистска
+я, 101, UK1
+Пользователи gosuslugi.ru 2023
+ФИО Айдаков Данил Олегович
+Телефон 79050047724
+Паспорт 8019945530
+СНИЛС 15355366773
+Заказы kassy.ru 2023
+ФИО Айдаков Данил
+Телефон 79050047724
+Email danilbu97@gmail.com
+IP-адрес 127.0.0.1
+Модель устройства Mozilla/5.0 (Linux; U; Android 9; ru-ru; Redmi 7 Build/P
+KQ1.181021.001) AppleWebKit/537.36 (KHTML, like Gec
+ko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/
+537.36 XiaoMi/MiuiBrowser/13.18.1-gn
+Заказы kassy.ru 2023
+ФИО Айдаков Данил Олегович
+Телефон 79050047724
+Email danilbu97@gmail.com
+Описание 430600 - Айдаков Данил Олегович - 79050047724
+IP-адрес 127.0.0.1
+Модель устройства API-kassy
+Заказы kassy.ru 2023
+ФИО Айдаков Данил Олегович
+Телефон 79050047724
+Email danilbu97@gmail.com
+Описание 430578 - Айдаков Данил Олегович - 79050047724
+IP-адрес 127.0.0.1
+Модель устройства API-kassy
+Заказы kassy.ru 2023
+ФИО Айдаков Данил Олегович
+Телефон 79050047724
+Email danilbu97@gmail.com
+IP-адрес 127.0.0.1
+Модель устройства Mozilla/5.0 (Linux; U; Android 9; ru-ru; Redmi 7 Build/P
+KQ1.181021.001) AppleWebKit/537.36 (KHTML, like Gec
+ko) Version/4.0 Chrome/89.0.4389.116 Mobile Safari/5
+37.36 XiaoMi/MiuiBrowser/12.18.3-gn
+Заказы kuper.ru 2023
+Email DANILBU97@GMAIL.COM
+Телефон 79050047724
+Адрес 452689 Респ Башкортостан г Нефтекамск ш Березов
+ское д 10Б этаж 0
+Имя клиента Айдаков Данил
+Наименование товара ФИО поставщика Вес 0.52
+Мяч футбольный Jogel Intro №5 белый
+ИП Гетогазова Олеся Петровна
+Стоимость заказа 999
+Дата регистрации 2023-09-08 14:37:16
+Заказы kuper.ru 2023
+Email DANILBU97@GMAIL.COM
+Телефон 79050047724
+Адрес 452689 Респ Башкортостан г Нефтекамск ш Березов
+ское д 10Б этаж 0
+Имя клиента Айдаков Данил
+Наименование товара ФИО поставщика ООО ФОРТУНА ПЛЮС
+Дезодорант спрей Axe Кожа и печеньки 150 мл
+Вес 0.133
+Стоимость заказа 467
+Дата регистрации 2023-09-11 22:45:39
+Заказы kuper.ru 2023
+Email DANILBU97@GMAIL.COM
+Телефон 79050047724
+Адрес 452689 Респ Башкортостан г Нефтекамск ш Березов
+ское д 10Б этаж 0
+Имя клиента Айдаков Данил
+Наименование товара ФИО поставщика Гель для душа AXE Кожа и Печеньки для мужчин
+Общество с ограниченной ответственностью ПАРФ
+ЮМ-АЛТАЙ
+Вес 0.288
+Стоимость заказа 308
+Дата регистрации 2023-09-15 12:59:05
+Пользователи vk.com 2023
+Ссылка https://vk.com/id129749191
+Email manson-1998@mail.ru`
+    },
+    {
+      title: "Досье номер 3",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 3.`
+    },
+    {
+      title: "Досье номер 4",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 4.`
+    },
+    {
+      title: "Досье номер 5",
+      stamp: "Совершенно секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 5.`
+    },
+    {
+      title: "Досье номер 6",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 6.`
+    },
+    {
+      title: "Досье номер 7",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 7.`
+    },
+    {
+      title: "Досье номер 8",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 8.`
+    },
+    {
+      title: "Досье номер 9",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 9.`
+    },
+    {
+      title: "Досье номер 10",
+      stamp: "Совершенно секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 10.`
+    },
+    {
+      title: "Досье номер 11",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 11.`
+    },
+    {
+      title: "Досье номер 12",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 12.`
+    },
+    {
+      title: "Досье номер 13",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 13.`
+    },
+    {
+      title: "Досье номер 14",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 14.`
+    },
+    {
+      title: "Досье номер 15",
+      stamp: "Совершенно 	секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 15.`
+    },
+    {
+      title: "Досье номер 16",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 16.`
+    },
+    {
+      title: "Досье номер 17",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 17.`
+    },
+    {
+      title: "Досье номер 18",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 18.`
+    },
+    {
+      title: "Досье номер 19",
+      stamp: "Секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 19.`
+    },
+    {
+      title: "Досье номер 20",
+      stamp: "Совершенно секретно",
+      meta: "ИСТОЧНИК: — · ДАТА: — · ГРИФ: —",
+      text: `Вставьте сюда текст досье номер 20.`
+    }
+  ];
+  /* ========================================================================== */
+
+  const catalog = document.getElementById('catalog');
+  const reader = document.getElementById('reader');
+
+  DOSSIERS.forEach((d, i) => {
+    const num = String(i + 1).padStart(2, '0');
+
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' selected' : '');
+    btn.dataset.target = 'd' + (i + 1);
+    btn.innerHTML = `<span class="doc-num">${num}</span><span>${d.title}</span>`;
+    catalog.appendChild(btn);
+
+    const paragraphs = d.text.split(/\n\s*\n/).map(p => `<p>${p.trim().replace(/\n/g, '<br>')}</p>`).join('');
+
+    const doc = document.createElement('div');
+    doc.className = 'dossier' + (i === 0 ? ' active' : '');
+    doc.id = 'd' + (i + 1);
+    doc.innerHTML = `
+      <div class="doc-frame">
+        <div class="stamp">${d.stamp}</div>
+        <div class="doc-title">${d.title}</div>
+        <div class="doc-meta">${d.meta}</div>
+        <div class="doc-body">${paragraphs}</div>
+      </div>`;
+    reader.appendChild(doc);
+  });
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('.dossier').forEach(d => d.classList.remove('active'));
+      btn.classList.add('selected');
+      document.getElementById(btn.dataset.target).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
